@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#202a27"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Fin Calc"><meta name="application-name" content="Fin Calc"><meta name="format-detection" content="telephone=no"><title>Finance Calculator</title><style>:root{font-family:Arial,Helvetica,sans-serif;color-scheme:dark;background:#202a27;color:#eef2ed;font-synthesis:none;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+*{box-sizing:border-box;touch-action:manipulation}
+/* The page never scrolls: every layout below fits the viewport. */
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none}
+body{display:flex;justify-content:center;align-items:center;padding:calc(12px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(12px + env(safe-area-inset-left));-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+/* Desktop / iPad: a device-shaped calculator, centred, scaled to the available height. */
+.calculator{position:relative;height:min(100%,1120px);aspect-ratio:3/5;max-width:100%;background:linear-gradient(110deg,#303b37,#26322f);padding:22px 20px 24px;display:grid;grid-template-rows:auto minmax(0,1fr);gap:17px;border-radius:22px;box-shadow:0 2px 0 #78877b80 inset,0 14px 50px #0e171730;user-select:none;-webkit-user-select:none}
+@supports not (aspect-ratio:1){.calculator{width:min(100%,490px)}}
+.face{position:relative;height:128px;padding:13px 16px;background:#aebbb1;border-radius:10px}
+.lcd{height:100%;display:flex;flex-direction:column;padding:8px 12px;background:#d7e2b9;border:2px solid #748065;border-radius:6px;box-shadow:inset 0 2px 5px #49593860;color:#35432e}
+.annunciators{display:flex;justify-content:space-between;gap:4px;min-height:13px;font-size:9px;letter-spacing:.6px}
+output{display:block;margin:auto 0;text-align:right;font:42px/1.1 'Courier New',monospace;font-weight:400;letter-spacing:1px;white-space:nowrap;overflow:hidden}
+output.long{font-size:29px;letter-spacing:0}
+#screen-label{font-size:10px;min-height:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.keypad{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(8,minmax(0,1fr));gap:10px 12px;min-height:0}
+.key-wrap{display:flex;flex-direction:column;min-width:0;min-height:0}
+.blue-label{height:17px;flex-shrink:0;line-height:14px;text-align:center;color:#a0c4d7;font-size:9px;font-weight:400;white-space:nowrap}
+.key{flex:1;min-height:0;min-width:0;width:100%;border:1px solid #1b2823;border-top-color:#637267;border-radius:9px;background:linear-gradient(#4b5951,#37443e);box-shadow:0 4px 0 #14221e,0 1px 1px #8a9c7850 inset;color:#eef2ed;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:3px 0;cursor:pointer;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;transition:transform .06s,background .06s}
+.primary{font-size:17px;font-weight:600;line-height:1.1}
+.secondary{font-size:9px;color:#e9b67d;line-height:1.1;min-height:10px}
+.key.digit .primary{font-size:24px;font-weight:500}
+.key.shift-blue{background:linear-gradient(#97b6c4,#85a7b8);color:#263d44;border-top-color:#c0d9dd}
+.key.shift-orange{background:linear-gradient(#d3a05e,#c48e4f);color:#3e3b2c;border-top-color:#eed09b}
+.key.shift-blue .primary,.key.shift-orange .primary{font-size:32px;line-height:1}
+.key.shift-blue .secondary,.key.shift-orange .secondary{display:none}
+.key:active,.key.pressed{transform:translateY(3px);box-shadow:0 1px 0 #14221e;background:#607667}
+.key.active{outline:2px solid #f6d9a4;outline-offset:1px}
+.key:focus-visible{outline:2px solid #f6d9a4;outline-offset:2px}
+/* One-time install tip: sits over the LCD bezel only, never over keys; removed when dismissed. */
+.install-hint{position:absolute;inset:0;z-index:2;display:flex;align-items:center;gap:10px;padding:6px 8px 6px 14px;border-radius:10px;border:1px solid #d3a05e99;background:#1b2421f2;color:#eef2ed;font-size:14px;line-height:1.3;cursor:pointer}
+.install-hint p{margin:0;flex:1}
+.install-hint b{color:#e9b67d;font-weight:600}
+.install-hint button{flex:none;width:36px;height:36px;padding:0;border-radius:50%;border:1px solid #6f7d74;background:#37443e;color:#eef2ed;font:20px/1 Arial,sans-serif;cursor:pointer}
+.share-glyph{width:.85em;height:1.05em;vertical-align:-.15em}
+/* Large windows (iPad portrait, big desktops): scale type and LCD with the calculator's height. */
+@media(min-width:521px) and (min-height:721px){
+ .calculator{container-type:size}
+ .face{height:max(128px,14.55cqh);padding:max(13px,1.48cqh) max(16px,3.27cqw)}
+ .lcd{padding:max(8px,.9cqh) max(12px,2.45cqw)}
+ .annunciators{font-size:max(9px,1.02cqh);min-height:max(13px,1.48cqh)}
+ output{font-size:max(42px,4.77cqh)}
+ output.long{font-size:max(29px,3.3cqh)}
+ #screen-label{font-size:max(10px,1.14cqh);min-height:max(12px,1.36cqh)}
+ .keypad{gap:max(10px,1.14cqh) max(12px,2.45cqw)}
+ .blue-label{height:max(17px,1.93cqh);line-height:max(14px,1.6cqh);font-size:max(9px,1.02cqh)}
+ .key{border-radius:max(9px,1.02cqh)}
+ .primary{font-size:max(17px,1.93cqh)}
+ .secondary{font-size:max(9px,1.02cqh);min-height:max(10px,1.14cqh)}
+ .key.digit .primary{font-size:max(24px,2.73cqh)}
+ .key.shift-blue .primary,.key.shift-orange .primary{font-size:max(32px,3.64cqh)}
+ .install-hint{font-size:max(14px,1.6cqh)}
+}
+/* Phones and narrow split views: full bleed, safe areas inside the calculator. */
+@media(max-width:520px){body{padding:0}.calculator{width:100%;height:100%;max-width:none;aspect-ratio:auto;border-radius:0;box-shadow:none;padding:calc(12px + env(safe-area-inset-top)) calc(14px + env(safe-area-inset-right)) calc(17px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));gap:14px}.face{height:112px;padding:11px 12px}.keypad{gap:9px 10px}.primary{font-size:16px}.blue-label{font-size:8px}.secondary{font-size:8px}.key.digit .primary{font-size:23px}}
+@media(max-height:720px){.calculator{padding-top:calc(8px + env(safe-area-inset-top));padding-bottom:calc(14px + env(safe-area-inset-bottom));gap:10px}.face{height:95px;padding:8px 12px}.keypad{gap:7px 9px}.blue-label{height:14px;line-height:12px;font-size:8px}.key{gap:1px}.primary{font-size:14px}.key.digit .primary{font-size:21px}.secondary{font-size:8px}output{font-size:35px}.install-hint{font-size:13px}}
+@media(max-width:350px){.calculator{padding-left:calc(10px + env(safe-area-inset-left));padding-right:calc(10px + env(safe-area-inset-right))}.keypad{column-gap:7px}.primary{font-size:14px}.blue-label{font-size:7px}.secondary{font-size:7px}.install-hint{font-size:12px}}
+/* Very tall, narrow windows (iPad Slide Over / 1/3 Split View): keep keys from stretching. */
+@media(max-width:520px) and (max-aspect-ratio:2/5){body{padding:calc(12px + env(safe-area-inset-top)) calc(8px + env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) calc(8px + env(safe-area-inset-left))}.calculator{height:auto;max-height:100%;aspect-ratio:10/23;border-radius:18px;padding:16px 12px 18px;box-shadow:0 2px 0 #78877b80 inset}}
+/* Phone landscape (iOS cannot lock orientation): LCD on top, keypad as two 5x4 blocks side by side. */
+@media(orientation:landscape) and (max-height:500px){
+ body{padding:0}
+ .calculator{width:100%;height:100%;max-width:none;aspect-ratio:auto;border-radius:0;box-shadow:none;padding:calc(6px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));gap:6px}
+ .face{height:72px;padding:5px 10px}
+ .lcd{padding:3px 12px}
+ .annunciators{font-size:8px;min-height:11px}
+ output{font-size:26px}
+ output.long{font-size:20px}
+ #screen-label{font-size:9px;min-height:11px}
+ .keypad{grid-template-columns:repeat(5,minmax(0,1fr)) 4px repeat(5,minmax(0,1fr));grid-template-rows:repeat(4,minmax(0,1fr));gap:5px 6px}
+ .key-wrap{grid-row:var(--lr);grid-column:var(--lc)}
+ .blue-label{height:13px;line-height:12px;font-size:8px}
+ .key{gap:1px;padding:2px 0}
+ .primary{font-size:14px}
+ .key.digit .primary{font-size:20px}
+ .secondary{font-size:8px}
+ .key.shift-blue .primary,.key.shift-orange .primary{font-size:24px}
+ .install-hint{font-size:13px}
+ .install-hint button{width:30px;height:30px}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./favicon.ico" sizes="16x16 32x32 48x48"><link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png"><link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png"></head><body><main class="calculator" aria-label="HP 10bII+ style financial calculator"><div class="face"><div class="lcd"><div class="annunciators" id="annunciators"></div><output id="display" aria-live="polite" aria-label="Calculator display">0.00</output><div id="screen-label">Ready</div></div></div><div class="keypad" id="keypad" aria-label="Calculator keypad"></div></main><script type="module">const keys = [
+['N','×P/YR','AccInt'],['I/YR','NOM%','YTM'],['PV','EFF%','PRICE'],['PMT','P/YR','CPN%'],['FV','AMORT','CALL'],
+['INPUT','DATE','D.MY/M.DY'],['MU','ΔDAYS','360/Act'],['CST','IRR/YR','Semi/Ann'],['PRC','NPV','SetDate'],['MAR','Beg/End','MatDate'],
+['K','SWAP','UNITS'],['%','%CHG','SP'],['CFj','Nj','VC'],['Σ+','Σ−','FC'],['⌫','RND','PROFIT'],
+['+/−','E','SL'],['RCL','STO','SOYD'],['→M','C STAT','DB'],['RM','(','HYP'],['M+',')','INV'],
+['blue','',''],['7','x̄,ȳ','Σx²'],['8','Sx,Sy','Σy²'],['9','σx,σy','Σxy'],['÷','1/x','SIN'],
+['orange','',''],['4','x̂,r','n'],['5','ŷ,m','Σx'],['6','x̄w,b','Σy'],['×','yˣ','COS'],
+['C','C ALL','C MEM'],['1','eˣ','REGR'],['2','LN','df,t↔P'],['3','n!','Z↔P'],['−','√x','TAN'],
+['ON','OFF','Alg/Chain'],['0','π','nPr'],['.','./,','nCr'],['=','DISP','RAND'],['+','x²','Rad/Deg']
+];
+const tvm=['N','I/YR','PV','PMT','FV'];
+const BIN=['+','−','×','÷','yˣ','nPr','nCr','%CHG','DATE','ΔDAYS'];
+const fact=n=>{if(!Number.isInteger(n)||n<0||n>170)throw Error('Invalid factorial');let a=1;for(let k=2;k<=n;k++)a*=k;return a;};
+// Scans the whole rate range and returns the sign-change root nearest zero (unique roots are unaffected;
+// with several roots this matches the HP manual's cash-flow example on printed p94 rather than a far negative root).
+function root(f,lo=-.99999999,hi=1e4){let prev=lo,fp=f(lo),best=null;const refine=(a,b)=>{let fa=f(a);for(let j=0;j<120;j++){let m=(a+b)/2,fm=f(m);if(fm===0)return m;if(fa*fm<=0)b=m;else{a=m;fa=fm;}}return(a+b)/2;};for(let i=1;i<=1600;i++){let x=Math.expm1(Math.log1p(lo)+(Math.log1p(hi)-Math.log1p(lo))*i/1600),fx=f(x);if(Number.isFinite(fx)&&Number.isFinite(fp)&&fx*fp<=0){let r=fx===0?x:fp===0?prev:refine(prev,x);if(best===null||Math.abs(r)<Math.abs(best))best=r;}prev=x;fp=fx;}if(best===null)throw Error('No solution; check signs and inputs');return best;}
+function solveTVM(r,key,begin=false){let {N:n,'I/YR':apr,PV:pv,PMT:pmt,FV:fv,PYR:py}=r;if(!(py>0))throw Error('P/YR must be positive');let i=apr/py/100;
+const factors=(rate,count)=>{if(rate<=-1)throw Error('Rate out of range');const q=Math.exp(count*Math.log1p(rate));return[q,Math.abs(rate)<1e-12?count:Math.expm1(count*Math.log1p(rate))/rate*(begin?1+rate:1)];};
+if(key==='I/YR'){if(n===0||(pv===0&&pmt===0&&fv===0))throw Error('No solution; every rate fits these inputs');return root(rate=>{let[q,a]=factors(rate,n);return pv*q+pmt*a+fv;})*100*py;}
+if(key==='N'){let res;if(i===0){if(pmt===0)throw Error('No solution');res=-(pv+fv)/pmt;}else{let a=pmt*(begin?1+i:1)/i,ratio=(a-fv)/(pv+a);if(ratio<=0)throw Error('No solution');res=Math.log(ratio)/Math.log1p(i);}if(!(res>=-1e-9))throw Error('No solution; check signs and inputs');return Math.max(res,0);}
+let[q,a]=factors(i,n);if(key==='PV')return-(fv+pmt*a)/q;if(key==='FV')return-(pv*q+pmt*a);if(a===0)throw Error('No solution');return-(fv+pv*q)/a;
+}
+class Calculator {
+constructor(){this.reset();}
+reset(){this.r={N:0,'I/YR':0,PV:0,PMT:0,FV:0,PYR:12,EFF:0,M:0,MU:0,CST:0,PRC:0,MAR:0,UNITS:0,SP:0,VC:0,FC:0,PROFIT:0,CPN:0,CALL:100,PRICE:0,YTM:0,SetDate:0,MatDate:0};this.mem=Array(20).fill(0);this.cf=[];this.stats=[];this.x=0;this.entry='';this.fresh=false;this.shift='';this.prefix='';this.tokens=[];this.input=null;this.begin=false;this.dec=2;this.alg=false;this.rad=false;this.dmy=false;this.actual=true;this.semi=true;this.off=false;this.error='';this.note='Ready';this.history=[];this.amort=null;this.inv=false;this.hyp=false;this.regression=1;this.comma=false;this.repeat=null;this.constant=null;this.lastBiz=null;this.df=null;this.memOffset=0;this.memOp=null;this.storable=false;this.prevFn='';}
+value(){return this.entry!==''?Number(this.entry.replace(/e-?$/, '')):this.x;}
+show(v,note=''){if(!Number.isFinite(v))throw Error('Undefined result');this.x=v;this.entry='';this.fresh=false;this.storable=false;this.note=note;return v;}
+// Pending arithmetic is completed (open parentheses closed, manual printed p28) and reported as storable;
+// otherwise a keyed-in or calculated display value is storable and a recalled/solved value is not (printed pp63, 143, 144).
+finish(v){let t=this.tokens.concat(v);while(t.includes('(')){let j=t.lastIndexOf('(');let r=this.evaluate(t.slice(j+1));t.splice(j);t.push(r);}return this.evaluate(t);}
+takeOperand(){if(this.tokens.length){let v=this.finish(this.value());this.tokens=[];this.repeat=null;return{store:true,v};}return{store:this.entry!==''||this.storable,v:this.value()};}
+format(){if(this.off)return '';if(this.error)return 'Error';if(this.entry!=='')return this.entry.replace('e','E');let x=this.x;if(Math.abs(x)>=1e12||(x!==0&&Math.abs(x)<10**-9))return x.toExponential(7);return this.dec===null?Number(x.toPrecision(12)).toString():x.toLocaleString(this.comma?'de-DE':'en-US',{minimumFractionDigits:this.dec,maximumFractionDigits:this.dec});}
+press(id){if(this.off&&id!==35)return;let key=keys[id];if(!key)return;if(id===20||id===25){this.shift=this.shift===(id===20?'blue':'orange')?'':(id===20?'blue':'orange');return;}
+let fn=key[this.shift==='orange'?1:this.shift==='blue'?2:0];let label=(this.shift?this.shift+' → ':'')+fn;this.shift='';this.history.push(label);this.history=this.history.slice(-100);
+try{if(this.error){this.error='';if(fn==='C'||fn==='⌫'){this.prevFn=fn;return;}}this.run(fn);if(!Number.isFinite(this.value()))throw Error('Result out of range');}catch(e){this.error=e.message;this.note=e.message;}this.prevFn=fn;}
+run(k){let v=this.value();
+if(this.prefix==='REGR'){if(k==='C'){this.prefix='';return;}if(k==='+'||k==='−'){this.regChoice=(this.regChoice+(k==='+'?1:6))%7;this.note='Regression '+this.regChoice+' · INPUT to select';return;}if(/^[0-6]$/.test(k)||k==='INPUT'){this.regression=k==='INPUT'?this.regChoice:+k;this.prefix='';this.note='Regression '+this.regression+' selected';return;}throw Error('Select regression 0–6');}
+
+if(this.prefix==='DISP'){this.prefix='';if(k==='.')this.dec=null;else if(/^\d$/.test(k))this.dec=+k;else throw Error('Choose 0–9 decimal places');this.note='Display precision changed';return;}
+if(this.prefix==='C MEM'){this.prefix='';if(k==='0'){this.cf=[];this.note='Cash flows cleared';}else if(k==='1'){tvm.forEach(x=>this.r[x]=0);this.r.EFF=0;this.note='TVM cleared';}else if(k==='4'){this.r.UNITS=this.r.SP=this.r.VC=this.r.FC=this.r.PROFIT=0;this.note='Break-even cleared';}else if(k==='7'){this.r.CPN=this.r.YTM=this.r.PRICE=this.r.SetDate=this.r.MatDate=0;this.r.CALL=100;this.note='Bonds cleared';}else throw Error('Use 0 cash flows, 1 TVM, 4 break-even, 7 bonds');return;}
+const reg={...Object.fromEntries(tvm.map(k=>[k,k])),'P/YR':'PYR','NOM%':'I/YR','EFF%':'EFF','CPN%':'CPN','CALL':'CALL','PRICE':'PRICE','YTM':'YTM','SetDate':'SetDate','MatDate':'MatDate',MU:'MU',CST:'CST',PRC:'PRC',MAR:'MAR',UNITS:'UNITS',SP:'SP',VC:'VC',FC:'FC',PROFIT:'PROFIT'}[k];
+if(this.prefix==='STO'||this.prefix==='RCL'){let p=this.prefix;if(k==='C'||k==='⌫'){this.prefix='';this.memOffset=0;this.memOp=null;return;}if(k==='.'){this.memOffset=10;return;}if(['+','−','×','÷'].includes(k)&&p==='STO'){this.memOp=k;return;}this.prefix='';if(/^\d$/.test(k)){let idx=+k+(this.memOffset||0);this.memOffset=0;if(p==='STO')this.mem[idx]=this.memOp?this.binary(this.mem[idx],this.memOp,v):v;this.memOp=null;this.show(this.mem[idx],p+' '+idx);return;}if(k==='×P/YR'&&p==='RCL'){this.show(this.r.N/this.r.PYR,'Years');return;}if(reg){if(p==='STO')this.r[reg]=v;this.show(this.r[reg],p+' '+k);return;}throw Error('Choose a register or TVM key');}
+if(/^\d$/.test(k)||k==='.'){this.amort=null;if(!this.fresh){this.entry='';this.fresh=true;}if(k==='.'&&this.entry.includes('.'))return;if(this.entry==='0'&&k!=='.')this.entry='';this.entry+=k;if(this.entry==='.')this.entry='0.';if(this.entry.length>16)this.entry=this.entry.slice(0,16);this.note='Entering';return;}
+if(k==='C'){if(this.entry!==''&&this.entry!=='0'){this.entry='0';this.fresh=true;}else{this.tokens=[];this.input=null;this.amort=null;this.repeat=null;this.show(0,'Cleared');}return;}
+if(k==='C ALL'){let keep={dec:this.dec,begin:this.begin,alg:this.alg,rad:this.rad,dmy:this.dmy,actual:this.actual,semi:this.semi,comma:this.comma},py=this.r.PYR;this.reset();Object.assign(this,keep);this.r.PYR=py;this.note='All memory cleared · P/YR and modes retained';return;}
+if(k==='C MEM'||k==='DISP'||k==='RCL'||k==='STO'){this.prefix=k;this.note=k==='C MEM'?'0 CF · 1 TVM · 4 break-even · 7 bonds':k==='DISP'?'Choose decimal places 0–9 (or . for floating)':k+' · choose register';return;}
+if(k==='⌫'){if(this.entry!==''){this.entry=this.entry.slice(0,-1)||'0';}else{this.tokens=[];this.repeat=null;this.show(0);}return;}
+if(k==='+/−'){if(this.entry.includes('e')){let [a,b]=this.entry.split('e');this.entry=a+'e'+(b.startsWith('-')?b.slice(1):'-'+b);}else if(this.entry)this.entry=this.entry.startsWith('-')?this.entry.slice(1):'-'+this.entry;else{this.x=-v;this.storable=true;}return;}
+if(k==='E'){if(this.entry.includes('e'))return;this.entry=(this.entry||String(v))+'e';this.fresh=true;return;}
+if(k==='ON'){this.off=false;this.show(0);return;}if(k==='OFF'){this.off=true;return;}
+if(k==='Alg/Chain'){this.alg=!this.alg;this.note=this.alg?'Algebraic mode':'Chain mode';return;}if(k==='Rad/Deg'){this.rad=!this.rad;this.note=this.rad?'Radians':'Degrees';return;}
+if(k==='Beg/End'){this.begin=!this.begin;this.note=this.begin?'Payments at beginning':'Payments at end';return;}
+if(k==='INPUT'){let o=this.takeOperand();this.input=o.v;this.show(o.v,'INPUT');return;}
+if(k==='SWAP'){if(this.nfv!==undefined&&this.note==='NPV'){this.show(this.nfv,'NFV');return;}if(this.input!==null){let a=this.input;this.input=v;this.show(a,'Swapped');}else if(this.tokens.length>=2){let a=this.tokens[this.tokens.length-2];this.tokens[this.tokens.length-2]=v;this.show(a,'Swapped');}return;}
+if(k==='→M'){this.r.M=v;this.show(v,'Stored in M');return;}if(k==='RM'){this.show(this.r.M,'Recall M');return;}if(k==='M+'){this.r.M+=v;this.show(v,'Added to M');return;}
+if(k==='K'){this.constant=this.tokens.length>=2?[v,this.tokens.at(-1)]:[v,'+'];this.note='Constant stored';return;}
+if(k==='('){if(this.fresh)throw Error('Enter an operator before (');this.tokens.push('(');return;}if(k===')'){this.tokens.push(v);let j=this.tokens.lastIndexOf('(');if(j<0)throw Error('Missing (');let result=this.evaluate(this.tokens.slice(j+1));this.tokens.splice(j);this.show(result);this.fresh=true;this.storable=true;return;}
+if(['+','−','×','÷','yˣ','nPr','nCr','%CHG','DATE','ΔDAYS'].includes(k)){if(this.input!==null&&['nPr','nCr','%CHG','DATE','ΔDAYS'].includes(k)){let a=this.input;this.input=null;this.show(this.binary(a,k,v),k);return;}if(this.tokens.length&&BIN.includes(this.prevFn)&&typeof this.tokens.at(-1)==='string'&&this.tokens.at(-1)!=='('){this.tokens[this.tokens.length-1]=k;return;}this.tokens.push(v);if(!this.alg&&!this.tokens.includes('(')&&this.tokens.length>=3){this.tokens=[this.evaluate(this.tokens)];this.show(this.tokens[0]);}else this.show(v);this.tokens.push(k);this.fresh=false;this.entry='';return;}
+if(k==='='){if(this.amort){this.amort.index=(this.amort.index+1)%3;this.show(this.amort.values[this.amort.index],['PRIN','INT','BAL'][this.amort.index]);return;}if(this.tokens.length){let a=this.tokens.concat(v);this.repeat=BIN.includes(a.at(-2))?a.slice(-2):null;let res=this.finish(v);this.tokens=[];this.show(res,'Result');}else if(this.constant)this.show(this.binary(v,this.constant[1],this.constant[0]),'Constant result');else if(this.repeat&&this.prevFn==='=')this.show(this.binary(v,this.repeat[0],this.repeat[1]),'Result');else{this.repeat=null;this.show(v,'Result');}this.storable=true;return;}
+if(k==='%'){let base=this.tokens.length>=2?this.tokens.at(-2):1;let op=this.tokens.at(-1);this.show((op==='+'||op==='−')?base*v/100:v/100,'Percent');this.fresh=true;this.storable=true;return;}
+if(k==='×P/YR'){v=this.takeOperand().v;this.r.N=v*this.r.PYR;this.show(this.r.N,'N stored');return;}
+if(k==='P/YR'){v=this.takeOperand().v;if(v<=0)throw Error('P/YR must be positive');this.r.PYR=v;this.show(v,'Periods per year');return;}
+if(tvm.includes(k)){let o=this.takeOperand();if(o.store){this.r[k]=o.v;this.show(o.v,k+' stored');}else{let x=solveTVM(this.r,k,this.begin);this.r[k]=x;this.show(x,k+' solved');}return;}
+// NOM% shares I/YR; EFF% has its own register. A keyed/calculated value is stored; otherwise the other rate is converted using the current P/YR (printed pp79-81, 146).
+if(k==='NOM%'){let o=this.takeOperand();if(o.store){this.r['I/YR']=o.v;this.show(o.v,'Nominal % stored');}else{this.r['I/YR']=100*this.r.PYR*Math.expm1(Math.log1p(this.r.EFF/100)/this.r.PYR);this.show(this.r['I/YR'],'Nominal annual %');}return;}
+if(k==='EFF%'){let o=this.takeOperand();if(o.store){this.r.EFF=o.v;this.show(o.v,'Effective % stored');}else{this.r.EFF=100*Math.expm1(this.r.PYR*Math.log1p(this.r['I/YR']/100/this.r.PYR));this.show(this.r.EFF,'Effective annual %');}return;}
+if(k==='CFj'){if(this.cf.length>=45)throw Error('45 cash flow groups maximum');let n=this.input===null?1:v,amount=this.input===null?v:this.input;if(!Number.isInteger(n)||n<1||n>999)throw Error('Frequency must be 1–999');this.cf.push({amount,n});this.input=null;this.show(amount,'CF '+(this.cf.length-1)+' stored');return;}
+if(k==='Nj'){if(!this.cf.length||!Number.isInteger(v)||v<1||v>999)throw Error('Enter a cash flow, then frequency 1–999');this.cf.at(-1).n=v;this.show(v,'Cash flow frequency');return;}
+if(k==='NPV'||k==='IRR/YR'){if(!this.cf.length)throw Error('Enter cash flows first');let flows=this.cf.flatMap(c=>Array(c.n).fill(c.amount));if(k==='IRR/YR'&&flows.every(x=>x===0))throw Error('No solution; all cash flows are zero');const npv=i=>flows.reduce((s,x,t)=>s+x/(1+i)**t,0);let result=k==='NPV'?npv(this.r['I/YR']/100/this.r.PYR):root(npv)*100*this.r.PYR;this.show(result,k);if(k==='IRR/YR')this.r['I/YR']=result;else{this.r.PV=result;this.nfv=result*(1+this.r['I/YR']/100/this.r.PYR)**(flows.length-1);}return;}
+if(['MU','CST','PRC','MAR'].includes(k)){let o=this.takeOperand();v=o.v;if(o.store){this.r[k]=v;this.lastBiz=k;this.show(v,k+' stored');return;}let{CST:c,PRC:p,MAR:m,MU:u}=this.r;let result=k==='MAR'?100*(p-c)/p:k==='MU'?100*(p-c)/c:k==='CST'?(this.lastBiz==='MU'?p/(1+u/100):p*(1-m/100)):(this.lastBiz==='MU'?c*(1+u/100):c/(1-m/100));this.r[k]=result;this.show(result,k+' solved');return;}
+if(['UNITS','SP','VC','FC','PROFIT'].includes(k)){let o=this.takeOperand();v=o.v;if(o.store){this.r[k]=v;this.show(v,k+' stored');return;}let{UNITS:n,SP:p,VC:c,FC:f,PROFIT:g}=this.r;let result={UNITS:()=>(f+g)/(p-c),SP:()=>(g+f)/n+c,VC:()=>p-(g+f)/n,FC:()=>n*(p-c)-g,PROFIT:()=>n*(p-c)-f}[k]();this.r[k]=result;this.show(result,k+' solved');return;}
+if(k==='AMORT'){let start=this.input??(this.fresh?v:this.amort?this.amort.end+1:1),end=this.fresh?v:this.amort?start+this.amort.end-this.amort.start:start;this.input=null;if(start<1||end<start||end>100000||!Number.isInteger(start)||!Number.isInteger(end))throw Error('Invalid payment range');const f=10**(this.dec??9),rd=x=>Math.sign(x)*Math.round(Math.abs(x)*f+1e-6)/f;let bal=this.r.PV,int=0,prin=0,i=this.r['I/YR']/100/this.r.PYR,p=rd(this.r.PMT);for(let j=1;j<=end;j++){let interest=(this.begin&&j===1)?0:rd(-bal*i),principal=p-interest;bal=rd(bal+principal);if(j>=start){int+=interest;prin+=principal;}}this.amort={start,end,index:-1,values:[rd(prin),rd(int),bal]};this.show(end,`PER ${start}–${end} · press = for PRIN, INT, BAL`);return;}
+if(k==='Σ+'||k==='Σ−'){let pair=this.input===null?[v,1]:[this.input,v];this.input=null;if(k==='Σ+')this.stats.push(pair);else{let i=this.stats.findLastIndex(p=>p[0]===pair[0]&&p[1]===pair[1]);if(i>=0)this.stats.splice(i,1);else throw Error('Data pair not found');}this.show(this.stats.length,'Statistical observations');return;}
+if(k==='C STAT'){this.stats=[];this.regression=1;this.show(0,'Statistics cleared');return;}
+if(['x̄,ȳ','Sx,Sy','σx,σy','x̂,r','ŷ,m','x̄w,b','Σx²','Σy²','Σxy','n','Σx','Σy'].includes(k)){this.stat(k,v);return;}
+if(k==='REGR'){this.prefix='REGR';this.regChoice=this.regression;this.note='Regression '+this.regChoice+' · 0 best, 1 linear, 2 log, 3 exp, 4 power, 5 exponent, 6 inverse';return;}
+if(k==='D.MY/M.DY'){this.dmy=!this.dmy;this.note=this.dmy?'Day.MonthYear':'Month.DayYear';return;}if(k==='360/Act'){this.actual=!this.actual;this.note=this.actual?'Actual calendar':'30/360 calendar';return;}if(k==='Semi/Ann'){this.semi=!this.semi;this.note=this.semi?'Semiannual coupons':'Annual coupons';return;}
+if(['CPN%','CALL','SetDate','MatDate'].includes(k)){if(this.fresh)this.r[reg]=v;this.show(this.r[reg],k);return;}
+if(['PRICE','YTM','AccInt'].includes(k)){if(this.fresh&&k!=='AccInt'){this.r[reg]=v;this.show(v,k+' stored');}else this.bond(k);return;}
+if(['SL','SOYD','DB'].includes(k)){let year=v,{N:n,PV:cost,FV:salvage,'I/YR':factor}=this.r;if(year<1||year>n||n<=0)throw Error('Invalid depreciation year/life');let dep=k==='SL'?(cost-salvage)/n:k==='SOYD'?(cost-salvage)*(n-year+1)/(n*(n+1)/2):Math.min(cost*(1-factor/100/n)**(year-1)*factor/100/n,Math.max(0,cost*(1-factor/100/n)**(year-1)-salvage));this.show(dep,k+' depreciation');return;}
+if(k==='INV'){this.inv=!this.inv;this.note='Inverse '+(this.inv?'on':'off');return;}if(k==='HYP'){this.hyp=!this.hyp;this.note='Hyperbolic '+(this.hyp?'on':'off');return;}
+if(['SIN','COS','TAN'].includes(k)){let fn=k.toLowerCase(),iv=this.inv,hyp=this.hyp;this.inv=this.hyp=false;let f=Math[(iv?'a':'')+fn+(hyp?'h':'')];let x=v;if(!iv&&!hyp&&!this.rad)x*=Math.PI/180;let ans=f(x);if(iv&&!hyp&&!this.rad)ans*=180/Math.PI;this.show(ans,k);return;}
+if(k==='Z↔P'){let iv=this.inv;this.inv=false;this.show(iv?inverseNormal(v):normal(v),iv?'Normal quantile':'Normal cumulative probability');return;}
+if(k==='df,t↔P'){if(this.input!==null){this.df=this.input;this.input=null;}if(!(this.df>0))throw Error('Enter df INPUT t, then blue 2');let iv=this.inv;this.inv=false;this.show(iv?bisect(x=>student(x,this.df)-v,-1e6,1e6):student(v,this.df),iv?'Student t quantile':'Student t cumulative probability');return;}
+const unary={'1/x':x=>1/x,'eˣ':Math.exp,LN:Math.log,'n!':fact,'√x':Math.sqrt,'x²':x=>x*x,'π':()=>Math.PI,RND:x=>Number(x.toFixed(this.dec??9)),RAND:()=>Math.random(),'./,':x=>x};
+if(k==='./,'){this.comma=!this.comma;this.note='Decimal separator changed';return;}
+if(unary[k]){this.show(unary[k](v),k);this.fresh=true;this.storable=true;return;}throw Error('Unknown function '+k);
+}
+binary(a,k,b){switch(k){case '+':return a+b;case '−':return a-b;case '×':return a*b;case '÷':return a/b;case 'yˣ':return a**b;case '%CHG':return (b-a)/a*100;case 'nPr':return fact(a)/fact(a-b);case 'nCr':return fact(a)/fact(b)/fact(a-b);case 'DATE':{let d=this.date(a);d.setUTCDate(d.getUTCDate()+b);return this.dateNumber(d);}case 'ΔDAYS':return this.days(this.date(a),this.date(b));default:throw Error('Invalid operation');}}
+evaluate(tokens){let values=[],ops=[],priority=o=>this.alg?(['+','−'].includes(o)?1:['×','÷'].includes(o)?2:3):1;const apply=()=>{let b=values.pop(),a=values.pop();values.push(this.binary(a,ops.pop(),b));};for(let t of tokens){if(typeof t==='number')values.push(t);else{while(ops.length&&priority(ops.at(-1))>=priority(t))apply();ops.push(t);}}while(ops.length)apply();if(values.length!==1)throw Error('Incomplete calculation');return values[0];}
+date(v){let s=Math.abs(v).toFixed(6).split('.'),a=+s[0],b=+s[1].slice(0,2),y=+s[1].slice(2),m=this.dmy?b:a,d=this.dmy?a:b;let out=new Date(Date.UTC(y,m-1,d));if(out.getUTCMonth()!==m-1||out.getUTCDate()!==d||y<100)throw Error('Invalid date');return out;}
+dateNumber(d){let a=this.dmy?d.getUTCDate():d.getUTCMonth()+1,b=this.dmy?d.getUTCMonth()+1:d.getUTCDate();return Number(a+'.'+String(b).padStart(2,'0')+d.getUTCFullYear());}
+days(a,b){return this.actual?(b-a)/86400000:360*(b.getUTCFullYear()-a.getUTCFullYear())+30*(b.getUTCMonth()-a.getUTCMonth())+Math.min(30,b.getUTCDate())-Math.min(30,a.getUTCDate());}
+bond(k){let settle=this.date(this.r.SetDate),mat=this.date(this.r.MatDate);if(mat<=settle)throw Error('Maturity must follow settlement');let m=this.semi?2:1,dates=[],d=mat;for(let j=0;d>settle&&j<1000;j++){dates.unshift(d);let month=mat.getUTCMonth()-(j+1)*12/m;let first=new Date(Date.UTC(mat.getUTCFullYear(),month,1));let last=new Date(Date.UTC(first.getUTCFullYear(),first.getUTCMonth()+1,0)).getUTCDate();d=new Date(Date.UTC(first.getUTCFullYear(),first.getUTCMonth(),Math.min(mat.getUTCDate(),last)));}let e=this.days(d,dates[0]),a=this.days(d,settle),rem=this.days(settle,dates[0])/e,c=this.r.CPN/m,acc=c*a/e;const price=y=>{let r=y/100/m;if(dates.length===1)return (this.r.CALL+c)/(1+r*rem)-acc;return dates.reduce((sum,_,i)=>sum+(c+(i===dates.length-1?this.r.CALL:0))/(1+r)**(i+rem),0)-acc;};let result=k==='AccInt'?acc:k==='PRICE'?price(this.r.YTM):root(rate=>price(rate*100*m)-this.r.PRICE)*100*m;if(k!=='AccInt')this.r[k]=result;this.show(result,k);}
+stat(k,v){let n=this.stats.length;if(!n)throw Error('Enter statistics first');let sx=0,sy=0,sxx=0,syy=0,sxy=0;for(let[x,y]of this.stats){sx+=x;sy+=y;sxx+=x*x;syy+=y*y;sxy+=x*y;}let mx=sx/n,my=sy/n,dx=sxx-sx*sx/n,dy=syy-sy*sy/n,m=(sxy-sx*sy/n)/dx,b=my-m*mx,r=(sxy-sx*sy/n)/Math.sqrt(dx*dy);let vals={'x̄,ȳ':[mx,my],'Sx,Sy':[Math.sqrt(dx/(n-1)),Math.sqrt(dy/(n-1))],'σx,σy':[Math.sqrt(dx/n),Math.sqrt(dy/n)],'x̂,r':[(v-b)/m,r],'ŷ,m':[m*v+b,m],'x̄w,b':[sxy/sy,b],'Σx²':[sxx],'Σy²':[syy],'Σxy':[sxy],n:[n],'Σx':[sx],'Σy':[sy]}[k];if(['x̂,r','ŷ,m','x̄w,b'].includes(k)){
+const fit=mode=>{let pts=this.stats.map(([x,y])=>[mode===2||mode===4?Math.log(x):mode===6?1/x:x,mode>=3&&mode<=5?Math.log(y):y]);if(pts.some(p=>p.some(x=>!Number.isFinite(x))))throw Error('Invalid data for regression');let xx=0,yy=0,xx2=0,yy2=0,xy=0;for(let[x,y]of pts){xx+=x;yy+=y;xx2+=x*x;yy2+=y*y;xy+=x*y;}let slope=(xy-xx*yy/n)/(xx2-xx*xx/n),intercept=(yy-slope*xx)/n,corr=(xy-xx*yy/n)/Math.sqrt((xx2-xx*xx/n)*(yy2-yy*yy/n));return{mode,slope,intercept,corr};};
+let fitResult;if(this.regression===0){let fits=[];for(let j=1;j<=6;j++){try{fits.push(fit(j));}catch{}}fits.sort((a,b)=>Math.abs(b.corr)-Math.abs(a.corr));fitResult=fits[0];if(!fitResult)throw Error('No regression fit');this.regression=fitResult.mode;}else fitResult=fit(this.regression||1);
+let{mode,slope,intercept,corr}=fitResult;let exp=mode>=3&&mode<=5;let predict=x=>{let xx=mode===2||mode===4?Math.log(x):mode===6?1/x:x;let yy=slope*xx+intercept;return exp?Math.exp(yy):yy;};let estimate=y=>{let xx=((exp?Math.log(y):y)-intercept)/slope;return mode===2||mode===4?Math.exp(xx):mode===6?1/xx:xx;};vals=k==='x̂,r'?[estimate(v),corr]:k==='ŷ,m'?[predict(v),mode===5?Math.exp(slope):slope]:[sxy/sy,exp?Math.exp(intercept):intercept];}
+this.input=vals[1]??null;this.show(vals[0],k+(vals.length>1?' · SWAP for second value':''));}
+}
+function bisect(f,a,b){if(f(a)*f(b)>0)throw Error('Probability out of range');for(let i=0;i<120;i++){let m=(a+b)/2;if(f(m)>0)b=m;else a=m;}return(a+b)/2;}
+function normal(x){let t=1/(1+.2316419*Math.abs(x)),p=.3989422804014327*Math.exp(-x*x/2)*t*(.319381530+t*(-.356563782+t*(1.781477937+t*(-1.821255978+t*1.330274429))));return x>=0?1-p:p;}
+function inverseNormal(p){if(p<=0||p>=1)throw Error('Probability must be between 0 and 1');return bisect(x=>normal(x)-p,-40,40);}
+function logGamma(z){let c=[676.5203681218851,-1259.1392167224028,771.3234287776531,-176.6150291621406,12.507343278686905,-.13857109526572012,9.984369578019572e-6,1.5056327351493116e-7];if(z<.5)return Math.log(Math.PI)-Math.log(Math.sin(Math.PI*z))-logGamma(1-z);z--;let x=.99999999999980993;c.forEach((a,i)=>x+=a/(z+i+1));let t=z+7.5;return .9189385332046727+(z+.5)*Math.log(t)-t+Math.log(x);}
+function beta(x,a,b){if(x<=0)return 0;if(x>=1)return 1;function cf(x,a,b){let qab=a+b,qap=a+1,qam=a-1,c=1,d=1-qab*x/qap;if(Math.abs(d)<1e-30)d=1e-30;d=1/d;let h=d;for(let m=1;m<250;m++){let aa=m*(b-m)*x/((qam+2*m)*(a+2*m));d=1+aa*d;if(Math.abs(d)<1e-30)d=1e-30;c=1+aa/c;if(Math.abs(c)<1e-30)c=1e-30;d=1/d;h*=d*c;aa=-(a+m)*(qab+m)*x/((a+2*m)*(qap+2*m));d=1+aa*d;if(Math.abs(d)<1e-30)d=1e-30;c=1+aa/c;if(Math.abs(c)<1e-30)c=1e-30;d=1/d;let del=d*c;h*=del;if(Math.abs(del-1)<1e-12)break;}return h;}let bt=Math.exp(logGamma(a+b)-logGamma(a)-logGamma(b)+a*Math.log(x)+b*Math.log1p(-x));return x<(a+1)/(a+b+2)?bt*cf(x,a,b)/a:1-bt*cf(1-x,b,a)/b;}
+function student(t,df){let p=.5*beta(df/(df+t*t),df/2,.5);return t<0?p:1-p;}
+
+
+const calc=new Calculator();
+const $=s=>document.querySelector(s);
+try{let saved=JSON.parse(localStorage.getItem('fin300-hp-v1'));if(saved&&saved.r&&typeof saved.r.PYR==='number'){Object.assign(calc,saved);calc.error='';calc.off=false;}}catch{}
+// Keys fire on touchstart (no 300 ms delay, no double-tap zoom, no callout). preventDefault on the
+// touch cancels the synthesized mouse/click events, so each tap presses exactly once. Mouse presses
+// fire on mousedown; keyboard/assistive activation arrives as a lone click.
+let lastTouch=-1e9;
+function bindKey(button,i){
+ let skipClickUntil=0;
+ const release=()=>button.classList.remove('pressed');
+ button.addEventListener('touchstart',e=>{lastTouch=performance.now();if(e.cancelable)e.preventDefault();else skipClickUntil=lastTouch+5000;button.classList.add('pressed');press(i);},{passive:false});
+ button.addEventListener('touchend',()=>setTimeout(release,60));
+ button.addEventListener('touchcancel',release);
+ button.addEventListener('mousedown',e=>{if(e.button!==0||performance.now()-lastTouch<1000)return;skipClickUntil=performance.now()+5000;press(i);});
+ button.addEventListener('click',()=>{if(performance.now()<skipClickUntil){skipClickUntil=0;return;}press(i);});
+}
+keys.forEach((k,i)=>{let wrap=document.createElement('div');wrap.className='key-wrap';let row=Math.floor(i/5),col=i%5;wrap.style.setProperty('--lr',row<4?row+1:row-3);wrap.style.setProperty('--lc',row<4?col+1:col+7);let top=document.createElement('div');top.className='blue-label';top.textContent=k[2];let button=document.createElement('button');button.type='button';button.className='key'+(/^\d$/.test(k[0])?' digit':'')+(i===20?' shift-blue':i===25?' shift-orange':i===38?' equal':'');button.dataset.key=i;button.setAttribute('aria-label',i===20?'Blue shift':i===25?'Orange shift':k[0]);button.title=[k[0],k[1]&&'Orange: '+k[1],k[2]&&'Blue: '+k[2]].filter(Boolean).join(' · ');let p=document.createElement('span');p.className='primary';p.textContent=i===20?'↰':i===25?'↱':k[0];let s=document.createElement('span');s.className='secondary';s.textContent=k[1];button.append(p,s);wrap.append(top,button);$('#keypad').append(wrap);bindKey(button,i);});
+// The screen is only the calculator: no pinch zoom, rubber-band scrolling or long-press menus.
+for(const t of ['gesturestart','gesturechange'])document.addEventListener(t,e=>e.preventDefault(),{passive:false});
+document.addEventListener('touchmove',e=>{if(e.cancelable)e.preventDefault();},{passive:false});
+$('#keypad').addEventListener('contextmenu',e=>e.preventDefault());
+function press(i){calc.press(i);render();}
+function render(){
+ $('#display').textContent=calc.format();
+ $('#display').classList.toggle('long',calc.format().length>12);
+ $('#screen-label').textContent=calc.off?'':calc.note;
+ $('#annunciators').replaceChildren();
+ for(let t of [calc.begin?'BEGIN':'',calc.rad?'RAD':'',calc.shift.toUpperCase(),calc.prefix,calc.input!==null?'INPUT':'',calc.inv?'INV':'',calc.hyp?'HYP':'']){
+  let s=document.createElement('span');s.textContent=calc.off?'':t;$('#annunciators').append(s);
+ }
+ document.querySelectorAll('.key').forEach(b=>b.classList.toggle('active',(b.dataset.key==='20'&&calc.shift==='blue')||(b.dataset.key==='25'&&calc.shift==='orange')));
+ try{localStorage.setItem('fin300-hp-v1',JSON.stringify(calc));}catch{}
+}
+document.addEventListener('keydown',e=>{if(e.ctrlKey||e.metaKey||e.altKey)return;let k=({'Enter':'=','*':'×','/':'÷','-':'−','Backspace':'⌫','Escape':'C','[':'orange',']':'blue'}[e.key]??e.key);let i=keys.findIndex(x=>x[0]===k);if(i>=0){e.preventDefault();press(i);let b=document.querySelector(`[data-key="${i}"]`);b.classList.add('pressed');setTimeout(()=>b.classList.remove('pressed'),100);}});
+render();
+
+// PWA glue: inlined by build.mjs into site/index.html only (not the standalone HTML file).
+const web = /^https?:$/.test(location.protocol);
+
+// Service worker: offline cache. Requires HTTPS (or localhost).
+if (web && 'serviceWorker' in navigator) {
+  const hadController = !!navigator.serviceWorker.controller;
+  let reg = null, updateReady = false;
+  const register = () => navigator.serviceWorker.register('./sw.js').then(r => { reg = r; }).catch(() => {});
+  document.readyState === 'complete' ? register() : addEventListener('load', register);
+  // A redeploy installs a new worker in the background. iOS resumes home-screen apps without
+  // navigating, so check for updates on resume and apply them (reload) the next time the app is
+  // hidden. Calculator state survives the reload via localStorage.
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) updateReady = true; });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') reg?.update().catch(() => {});
+    else if (updateReady) location.reload();
+  });
+}
+
+// One-time "Add to Home Screen" hint for iOS/iPadOS browser tabs. iPadOS Safari reports a Mac
+// user agent, so detect it by touch support.
+(() => {
+  const HINT_KEY = 'fin-calc-install-hint-dismissed';
+  const ua = navigator.userAgent;
+  const ios = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  const standalone = navigator.standalone === true ||
+    ['standalone', 'fullscreen', 'minimal-ui'].some(m => matchMedia(`(display-mode: ${m})`).matches);
+  let dismissed = false;
+  try { dismissed = localStorage.getItem(HINT_KEY) === '1'; } catch {}
+  if (!web || !ios || standalone || dismissed) return;
+  const hint = document.createElement('div');
+  hint.className = 'install-hint';
+  hint.setAttribute('role', 'note');
+  hint.innerHTML = '<p>Tap <b>Share</b> <svg class="share-glyph" viewBox="0 0 16 20" aria-hidden="true">' +
+    '<path d="M8 12.5V1.5M4.5 5 8 1.5 11.5 5M5.5 8H2.5v10.5h11V8h-3" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>, then ' +
+    '<b>Add to Home Screen</b></p><button type="button" aria-label="Dismiss install tip">×</button>';
+  const dismiss = () => {
+    hint.remove();
+    try { localStorage.setItem(HINT_KEY, '1'); } catch {}
+  };
+  hint.addEventListener('click', dismiss);
+  document.querySelector('.face').append(hint);
+})();
+</script></body></html>
