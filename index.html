@@ -86,7 +86,7 @@ output.long{font-size:29px;letter-spacing:0}
 ['+/−','E','SL'],['RCL','STO','SOYD'],['→M','C STAT','DB'],['RM','(','HYP'],['M+',')','INV'],
 ['blue','',''],['7','x̄,ȳ','Σx²'],['8','Sx,Sy','Σy²'],['9','σx,σy','Σxy'],['÷','1/x','SIN'],
 ['orange','',''],['4','x̂,r','n'],['5','ŷ,m','Σx'],['6','x̄w,b','Σy'],['×','yˣ','COS'],
-['C','C MEM','C ALL'],['1','eˣ','REGR'],['2','LN','df,t↔P'],['3','n!','Z↔P'],['−','√x','TAN'],
+['C','C ALL','C MEM'],['1','eˣ','REGR'],['2','LN','df,t↔P'],['3','n!','Z↔P'],['−','√x','TAN'],
 ['ON','OFF','Alg/Chain'],['0','π','nPr'],['.','./,','nCr'],['=','DISP','RAND'],['+','x²','Rad/Deg']
 ];
 const tvm=['N','I/YR','PV','PMT','FV'];
@@ -116,14 +116,16 @@ let[q,a]=factors(i,n);if(key==='PV')return-(fv+pmt*a)/q;if(key==='FV')return-(pv
 }
 class Calculator {
 constructor(){this.reset();}
-reset(){this.r={N:0,'I/YR':0,PV:0,PMT:0,FV:0,PYR:12,EFF:0,M:0,MU:0,CST:0,PRC:0,MAR:0,UNITS:0,SP:0,VC:0,FC:0,PROFIT:0,CPN:0,CALL:100,PRICE:0,YTM:0,SetDate:0,MatDate:0};this.mem=Array(20).fill(0);this.cf=[];this.stats=[];this.x=0;this.entry='';this.fresh=false;this.shift='';this.prefix='';this.tokens=[];this.input=null;this.begin=false;this.dec=2;this.alg=false;this.rad=false;this.dmy=false;this.actual=true;this.semi=true;this.off=false;this.error='';this.note='Ready';this.history=[];this.amort=null;this.inv=false;this.hyp=false;this.regression=1;this.comma=false;this.repeat=null;this.constant=null;this.lastBiz=null;this.df=null;this.memOffset=0;this.memOp=null;this.storable=false;this.prevFn='';this.alt=null;this.lastPct=0;}
+// Defaults match the FIN 300 class setup (1 P/YR, DISP 4) rather than HP's factory 12 and 2: the student's own calculator is
+// set that way and the class divides rates by hand (e.g. `10 ÷ 12 I/YR`, 60 N). C ALL keeps both settings, as on the HP.
+reset(){this.stateVersion=2;this.r={N:0,'I/YR':0,PV:0,PMT:0,FV:0,PYR:1,EFF:0,M:0,MU:0,CST:0,PRC:0,MAR:0,UNITS:0,SP:0,VC:0,FC:0,PROFIT:0,CPN:0,CALL:100,PRICE:0,YTM:0,SetDate:0,MatDate:0};this.mem=Array(20).fill(0);this.cf=[];this.stats=[];this.x=0;this.entry='';this.fresh=false;this.shift='';this.prefix='';this.tokens=[];this.input=null;this.begin=false;this.dec=4;this.alg=false;this.rad=false;this.dmy=false;this.actual=true;this.semi=true;this.off=false;this.error='';this.note='Ready';this.history=[];this.amort=null;this.inv=false;this.hyp=false;this.regression=1;this.comma=false;this.repeat=null;this.constant=null;this.lastBiz=null;this.df=null;this.memOffset=0;this.memOp=null;this.storable=false;this.prevFn='';this.alt=null;this.lastPct=0;}
 value(){return this.entry!==''?Number(this.entry.replace(/e-?$/, '')):this.x;}
 show(v,note=''){if(!Number.isFinite(v))throw Error('Undefined result');this.x=v;this.entry='';this.fresh=false;this.storable=false;this.note=note;return v;}
 // Pending arithmetic is completed (open parentheses closed, manual printed p28) and reported as storable;
 // otherwise a keyed-in or calculated display value is storable and a recalled/solved value is not (printed pp63, 143, 144).
 finish(v){let t=this.tokens.concat(v);while(t.includes('(')){let j=t.lastIndexOf('(');let r=this.evaluate(t.slice(j+1));t.splice(j);t.push(r);}return this.evaluate(t);}
 takeOperand(){if(this.tokens.length){let v=this.finish(this.value());this.tokens=[];this.repeat=null;return{store:true,v};}return{store:this.entry!==''||this.storable,v:this.value()};}
-format(){if(this.off)return '';if(this.error)return 'Error';if(this.entry!=='')return this.entry.replace('e','E');let x=this.x;if(Math.abs(x)>=1e12||(x!==0&&Math.abs(x)<10**-9))return x.toExponential(7);return this.dec===null?Number(x.toPrecision(12)).toString():x.toLocaleString(this.comma?'de-DE':'en-US',{minimumFractionDigits:this.dec,maximumFractionDigits:this.dec});}
+format(){if(this.off)return '';if(this.error)return 'Error';if(this.entry!=='')return this.entry.replace('e','E');let x=this.x;if(Math.abs(x)>=1e12||(x!==0&&Math.abs(x)<10**-9))return x.toExponential(7);if(this.dec===null)return Number(x.toPrecision(12)).toString();x=roundDec(x,this.dec)||0;return x.toLocaleString(this.comma?'de-DE':'en-US',{minimumFractionDigits:this.dec,maximumFractionDigits:this.dec});}
 press(id){if(this.off&&id!==35)return;let key=keys[id];if(!key)return;if(id===20||id===25){this.shift=this.shift===(id===20?'blue':'orange')?'':(id===20?'blue':'orange');return;}
 let fn=key[this.shift==='orange'?1:this.shift==='blue'?2:0];let label=(this.shift?this.shift+' → ':'')+fn;this.shift='';this.history.push(label);this.history=this.history.slice(-100);
 try{if(this.error){this.error='';if(fn==='C'||fn==='⌫'){this.prevFn=fn;return;}}if(fn!=='SWAP')this.alt=null;this.run(fn);if(!Number.isFinite(this.value()))throw Error('Result out of range');}catch(e){this.error=e.message;this.note=e.message;}this.prevFn=fn;}
@@ -136,7 +138,7 @@ const reg={...Object.fromEntries(tvm.map(k=>[k,k])),'P/YR':'PYR','NOM%':'I/YR','
 if(this.prefix==='STO'||this.prefix==='RCL'){let p=this.prefix;if(k==='C'||k==='⌫'){this.prefix='';this.memOffset=0;this.memOp=null;return;}if(k==='.'){this.memOffset=10;return;}if(['+','−','×','÷'].includes(k)&&p==='STO'){this.memOp=k;return;}this.prefix='';if(/^\d$/.test(k)){let idx=+k+(this.memOffset||0);this.memOffset=0;if(p==='STO')this.mem[idx]=this.memOp?this.binary(this.mem[idx],this.memOp,v):v;this.memOp=null;this.show(this.mem[idx],p+' '+idx);return;}if(k==='×P/YR'&&p==='RCL'){this.show(this.r.N/this.r.PYR,'Years');return;}if(reg){if(p==='STO')this.r[reg]=v;this.show(this.r[reg],p+' '+k);return;}throw Error('Choose a register or TVM key');}
 if(/^\d$/.test(k)||k==='.'){this.amort=null;if(!this.fresh){this.entry='';this.fresh=true;}if(k==='.'&&this.entry.includes('.'))return;if(this.entry==='0'&&k!=='.')this.entry='';this.entry+=k;if(this.entry==='.')this.entry='0.';if(this.entry.length>16)this.entry=this.entry.slice(0,16);this.note='Entering';return;}
 if(k==='C'){if(this.entry!==''&&this.entry!=='0'){this.entry='0';this.fresh=true;}else{this.tokens=[];this.input=null;this.amort=null;this.repeat=null;this.show(0,'Cleared');}return;}
-if(k==='C ALL'){let keep={dec:this.dec,begin:this.begin,alg:this.alg,rad:this.rad,dmy:this.dmy,actual:this.actual,semi:this.semi,comma:this.comma},py=this.r.PYR;this.reset();Object.assign(this,keep);this.r.PYR=py;this.note='All memory cleared · P/YR and modes retained';return;}
+if(k==='C ALL'){let keep={dec:this.dec,begin:this.begin,alg:this.alg,rad:this.rad,dmy:this.dmy,actual:this.actual,semi:this.semi,comma:this.comma},py=this.r.PYR;this.reset();Object.assign(this,keep);this.r.PYR=py;this.note='All memory cleared · P/YR = '+this.r.PYR;return;}
 if(k==='C MEM'||k==='DISP'||k==='RCL'||k==='STO'){this.prefix=k;this.note=k==='C MEM'?'0 CF · 1 TVM · 4 break-even · 7 bonds':k==='DISP'?'Choose decimal places 0–9 (or . for floating)':k+' · choose register';return;}
 if(k==='⌫'){if(this.entry!==''){this.entry=this.entry.slice(0,-1)||'0';}else{this.tokens=[];this.repeat=null;this.show(0);}return;}
 if(k==='+/−'){if(this.entry.includes('e')){let [a,b]=this.entry.split('e');this.entry=a+'e'+(b.startsWith('-')?b.slice(1):'-'+b);}else if(this.entry)this.entry=this.entry.startsWith('-')?this.entry.slice(1):'-'+this.entry;else{this.x=-v;this.storable=true;}return;}
@@ -187,7 +189,7 @@ if(['SIN','COS','TAN'].includes(k)){let fn=k.toLowerCase(),iv=this.inv,hyp=this.
 if(k==='Z↔P'){let iv=this.inv;this.inv=false;this.show(iv?inverseNormal(v):normal(v),iv?'Normal quantile':'Normal cumulative probability');return;}
 // Student t is a two-number function: `df INPUT t` then the key, or in-line `df [key] t =`; INV gives t from P (printed pp131-132).
 if(k==='df,t↔P'){let iv=this.inv;this.inv=false;this.run(iv?'tinv':'tP');return;}
-const unary={'1/x':x=>1/x,'eˣ':Math.exp,LN:Math.log,'n!':fact,'√x':Math.sqrt,'x²':x=>x*x,'π':()=>Math.PI,RND:x=>Number(x.toFixed(this.dec??9)),RAND:()=>Math.random(),'./,':x=>x};
+const unary={'1/x':x=>1/x,'eˣ':Math.exp,LN:Math.log,'n!':fact,'√x':Math.sqrt,'x²':x=>x*x,'π':()=>Math.PI,RND:x=>roundDec(x,this.dec??9),RAND:()=>Math.random(),'./,':x=>x};
 if(k==='./,'){this.comma=!this.comma;this.note='Decimal separator changed';return;}
 if(unary[k]){this.show(unary[k](v),k);this.fresh=true;this.storable=true;return;}throw Error('Unknown function '+k);
 }
@@ -204,6 +206,9 @@ let fitResult;if(this.regression===0){let fits=[];for(let j=1;j<=6;j++){try{fits
 let{mode,slope,intercept,corr}=fitResult;let exp=mode>=3&&mode<=5;let predict=x=>{let xx=mode===2||mode===4?Math.log(x):mode===6?1/x:x;let yy=slope*xx+intercept;return exp?Math.exp(yy):yy;};let estimate=y=>{let xx=((exp?Math.log(y):y)-intercept)/slope;return mode===2||mode===4?Math.exp(xx):mode===6?1/xx:xx;};vals=k==='x̂,r'?[estimate(v),corr]:k==='ŷ,m'?[predict(v),mode===5?Math.exp(slope):slope]:[sxy/sy,exp?Math.exp(intercept):intercept];}
 let names=k.split(',');this.show(vals[0],names[0]+(vals.length>1?' · SWAP for '+names[1]:''));if(vals.length>1)this.alt={v:vals[1],note:names[1]};}
 }
+// Rounds like the HP display: keep 12 significant digits, then round half up in decimal at dp places, so exact halves such as
+// 2.02995 → 2.0300 and 1.005 → 1.01 are not pulled down by binary representation.
+function roundDec(x,dp){if(!Number.isFinite(x)||x===0)return x;let [m,e]=Math.abs(x).toExponential(11).split('e'),digits=m.replace('.',''),exp=+e,keep=exp+1+dp;if(keep<0)return 0;if(keep>=digits.length)return Math.sign(x)*Number(m+'e'+e);let big=BigInt(digits.slice(0,keep)||'0')+(+digits[keep]>=5?1n:0n);return Math.sign(x)*Number(big+'e'+(exp+1-keep));}
 function bisect(f,a,b){if(f(a)*f(b)>0)throw Error('Probability out of range');for(let i=0;i<120;i++){let m=(a+b)/2;if(f(m)>0)b=m;else a=m;}return(a+b)/2;}
 // Standard normal lower tail. |x|<4: Hart's double-precision rational approximation (as given by West, 2005), absolute error
 // about 3e-15. |x|>=4: continued fraction for erfc, which keeps full relative precision in the tails.
@@ -216,7 +221,8 @@ function student(t,df){let p=.5*beta(df/(df+t*t),df/2,.5);return t<0?p:1-p;}
 
 const calc=new Calculator();
 const $=s=>document.querySelector(s);
-try{let saved=JSON.parse(localStorage.getItem('fin300-hp-v1'));if(saved&&saved.r&&typeof saved.r.PYR==='number'){Object.assign(calc,saved);calc.error='';calc.off=false;}}catch{}
+// State saved before stateVersion 2 still carries the old factory defaults (12 P/YR, 2 decimals); move those once to the class setup.
+try{let saved=JSON.parse(localStorage.getItem('fin300-hp-v1'));if(saved&&saved.r&&typeof saved.r.PYR==='number'){if(saved.stateVersion!==2){if(saved.r.PYR===12)saved.r.PYR=1;if(saved.dec===2)saved.dec=4;saved.stateVersion=2;}Object.assign(calc,saved);calc.error='';calc.off=false;}}catch{}
 // Keys fire on touchstart (no 300 ms delay, no double-tap zoom, no callout). preventDefault on the
 // touch cancels the synthesized mouse/click events, so each tap presses exactly once. Mouse presses
 // fire on mousedown; keyboard/assistive activation arrives as a lone click.
@@ -241,7 +247,7 @@ function render(){
  $('#display').classList.toggle('long',calc.format().length>12);
  $('#screen-label').textContent=calc.off?'':calc.note;
  $('#annunciators').replaceChildren();
- for(let t of [calc.begin?'BEGIN':'',calc.rad?'RAD':'',calc.shift.toUpperCase(),calc.prefix,calc.input!==null?'INPUT':'',calc.inv?'INV':'',calc.hyp?'HYP':'']){
+ for(let t of [calc.r.PYR!==1?'P/YR '+calc.r.PYR:'',calc.begin?'BEGIN':'',calc.rad?'RAD':'',calc.shift.toUpperCase(),calc.prefix,calc.input!==null?'INPUT':'',calc.inv?'INV':'',calc.hyp?'HYP':'']){
   let s=document.createElement('span');s.textContent=calc.off?'':t;$('#annunciators').append(s);
  }
  document.querySelectorAll('.key').forEach(b=>b.classList.toggle('active',(b.dataset.key==='20'&&calc.shift==='blue')||(b.dataset.key==='25'&&calc.shift==='orange')));
