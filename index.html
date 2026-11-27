@@ -7,8 +7,8 @@ body{display:flex;justify-content:center;align-items:center;padding:calc(12px + 
 /* Desktop / iPad: a device-shaped calculator, centred, scaled to the available height. */
 .calculator{position:relative;height:min(100%,1120px);aspect-ratio:3/5;max-width:100%;background:linear-gradient(110deg,#303b37,#26322f);padding:22px 20px 24px;display:grid;grid-template-rows:auto minmax(0,1fr);gap:17px;border-radius:22px;box-shadow:0 2px 0 #78877b80 inset,0 14px 50px #0e171730;user-select:none;-webkit-user-select:none}
 @supports not (aspect-ratio:1){.calculator{width:min(100%,490px)}}
-.face{position:relative;height:128px;padding:13px 16px;background:#aebbb1;border-radius:10px}
-.lcd{height:100%;display:flex;flex-direction:column;padding:8px 12px;background:#d7e2b9;border:2px solid #748065;border-radius:6px;box-shadow:inset 0 2px 5px #49593860;color:#35432e}
+.face{position:relative;min-width:0;height:128px;padding:13px 16px;background:#aebbb1;border-radius:10px}
+.lcd{height:100%;min-width:0;display:flex;flex-direction:column;padding:8px 12px;background:#d7e2b9;border:2px solid #748065;border-radius:6px;box-shadow:inset 0 2px 5px #49593860;color:#35432e}
 .annunciators{display:flex;justify-content:space-between;gap:4px;min-height:13px;font-size:9px;letter-spacing:.6px}
 output{display:block;margin:auto 0;text-align:right;font:42px/1.1 'Courier New',monospace;font-weight:400;letter-spacing:1px;white-space:nowrap;overflow:hidden}
 output.long{font-size:29px;letter-spacing:0}
@@ -125,7 +125,9 @@ show(v,note=''){if(!Number.isFinite(v))throw Error('Undefined result');this.x=v;
 // otherwise a keyed-in or calculated display value is storable and a recalled/solved value is not (printed pp63, 143, 144).
 finish(v){let t=this.tokens.concat(v);while(t.includes('(')){let j=t.lastIndexOf('(');let r=this.evaluate(t.slice(j+1));t.splice(j);t.push(r);}return this.evaluate(t);}
 takeOperand(){if(this.tokens.length){let v=this.finish(this.value());this.tokens=[];this.repeat=null;return{store:true,v};}return{store:this.entry!==''||this.storable,v:this.value()};}
-format(){if(this.off)return '';if(this.error)return 'Error';if(this.entry!=='')return this.entry.replace('e','E');let x=this.x;if(Math.abs(x)>=1e12||(x!==0&&Math.abs(x)<10**-9))return x.toExponential(7);if(this.dec===null)return Number(x.toPrecision(12)).toString();x=roundDec(x,this.dec)||0;return x.toLocaleString(this.comma?'de-DE':'en-US',{minimumFractionDigits:this.dec,maximumFractionDigits:this.dec});}
+// Thousands separators for typed entries and DISP-all values (1000000 → 1,000,000); ./, swaps the two separators.
+group(s){let m=/^(-?)(\d*)(\.?\d*)(e.*)?$/.exec(s);if(!m)return s;let [,sign,int,frac,exp='']=m,[g,d]=this.comma?['.',',']:[',','.'];return sign+int.replace(/\B(?=(\d{3})+(?!\d))/g,g)+frac.replace('.',d)+exp.replace('e','E');}
+format(){if(this.off)return '';if(this.error)return 'Error';if(this.entry!=='')return this.group(this.entry);let x=this.x;if(Math.abs(x)>=1e12||(x!==0&&Math.abs(x)<10**-9))return x.toExponential(7);if(this.dec===null)return this.group(Number(x.toPrecision(12)).toString());x=roundDec(x,this.dec)||0;return x.toLocaleString(this.comma?'de-DE':'en-US',{minimumFractionDigits:this.dec,maximumFractionDigits:this.dec});}
 press(id){if(this.off&&id!==35)return;let key=keys[id];if(!key)return;if(id===20||id===25){this.shift=this.shift===(id===20?'blue':'orange')?'':(id===20?'blue':'orange');return;}
 let fn=key[this.shift==='orange'?1:this.shift==='blue'?2:0];let label=(this.shift?this.shift+' → ':'')+fn;this.shift='';this.history.push(label);this.history=this.history.slice(-100);
 try{if(this.error){this.error='';if(fn==='C'||fn==='⌫'){this.prevFn=fn;return;}}if(fn!=='SWAP')this.alt=null;this.run(fn);if(!Number.isFinite(this.value()))throw Error('Result out of range');}catch(e){this.error=e.message;this.note=e.message;}this.prevFn=fn;}
@@ -242,9 +244,14 @@ for(const t of ['gesturestart','gesturechange'])document.addEventListener(t,e=>e
 document.addEventListener('touchmove',e=>{if(e.cancelable)e.preventDefault();},{passive:false});
 $('#keypad').addEventListener('contextmenu',e=>e.preventDefault());
 function press(i){calc.press(i);render();}
+// Long numbers with commas (e.g. -1,234,567,890.1234) shrink to fit the screen instead of being cut off.
+function fitDisplay(text){
+ const d=$('#display');d.textContent=text;d.style.fontSize='';d.classList.toggle('long',text.length>12);
+ if(d.scrollWidth>d.clientWidth)d.style.fontSize=Math.floor(parseFloat(getComputedStyle(d).fontSize)*d.clientWidth/d.scrollWidth)+'px';
+}
+addEventListener('resize',()=>fitDisplay(calc.format()));
 function render(){
- $('#display').textContent=calc.format();
- $('#display').classList.toggle('long',calc.format().length>12);
+ fitDisplay(calc.format());
  $('#screen-label').textContent=calc.off?'':calc.note;
  $('#annunciators').replaceChildren();
  for(let t of [calc.r.PYR!==1?'P/YR '+calc.r.PYR:'',calc.begin?'BEGIN':'',calc.rad?'RAD':'',calc.shift.toUpperCase(),calc.prefix,calc.input!==null?'INPUT':'',calc.inv?'INV':'',calc.hyp?'HYP':'']){
